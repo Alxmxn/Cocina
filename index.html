@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Pasada</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1d1d1b">
+<link rel="icon" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #1d1d1b;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 28px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #ece7da;
+    padding: 32px 16px;
+    display: flex;
+    justify-content: center;
+  }
+  .station { width: 100%; max-width: 660px; }
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #3a3a37;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #7a8f96;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 0;
+    color: #f4efe0;
+  }
+  .status {
+    font-size: 11px;
+    color: #6fae7f;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #6fae7f; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab {
+    background: transparent;
+    border: 1px solid #4a4a45;
+    color: #a9a498;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .tab.active { border-color: #4f7a8c; color: #a9d4e6; background: rgba(79,122,140,0.12); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .chat-log { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; max-height: 340px; overflow-y: auto; }
+  .msg { padding: 10px 12px; font-size: 13.5px; line-height: 1.55; max-width: 88%; }
+  .msg.user { align-self: flex-end; background: rgba(79,122,140,0.15); border: 1px solid #4f7a8c; color: #d7ecf5; }
+  .msg.jarvis { align-self: flex-start; background: rgba(255,255,255,0.04); border: 1px solid #3a3a37; color: #ece7da; }
+  .chat-input-row { display: flex; gap: 8px; align-items: center; }
+  input[type=text], textarea {
+    background: #131311;
+    border: 1px solid #4a4a45;
+    color: #ece7da;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  input[type=text]:focus, textarea:focus { outline: none; border-color: #4f7a8c; }
+  button.icon {
+    background: transparent;
+    border: 1px solid #4a4a45;
+    color: #a9a498;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  button.icon.listening { border-color: #d94f30; color: #ff9273; }
+  button.icon:hover { border-color: #4f7a8c; color: #a9d4e6; }
+  button.send {
+    background: transparent;
+    border: 1px solid #4f7a8c;
+    color: #a9d4e6;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0 16px;
+    height: 40px;
+    cursor: pointer;
+  }
+  button.send:hover { background: rgba(79,122,140,0.15); }
+  .voice-toggle { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #a9a498; margin-top: 10px; }
+  .voice-toggle input { accent-color: #4f7a8c; }
+
+  .add-ticket { display: flex; gap: 8px; margin-bottom: 18px; }
+  .ticket-tag { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #a9a498; white-space: nowrap; }
+  .ticket-tag input { accent-color: #d94f30; }
+  .tickets { display: flex; flex-direction: column; gap: 10px; }
+  .ticket {
+    background: #f2ede1;
+    color: #2b2822;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #4f7a8c;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ticket.urgent { border-left-color: #d94f30; }
+  .ticket-title { font-size: 14px; }
+  .ticket-tag-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #d94f30;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .ticket-actions button {
+    background: transparent;
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #6b6656;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  .ticket-actions button:hover { color: #d94f30; }
+  .empty { font-size: 13px; color: #6b6656; font-style: italic; }
+
+  .notes-add { display: flex; gap: 8px; margin-bottom: 18px; }
+  .notes-list { display: flex; flex-direction: column; gap: 8px; }
+  .note {
+    border: 1px solid #3a3a37;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #d5d0c2;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .note button { background: none; border: none; color: #6b6656; cursor: pointer; font-size: 11px; }
+  .note button:hover { color: #d94f30; }
+  .err { color: #d94f30; font-size: 11px; margin-top: 6px; display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  .receiving-mic {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px dashed #4a4a45;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+  .receiving-mic .icon { width: 48px; height: 48px; font-size: 20px; }
+  .receiving-hint { font-size: 12px; color: #a9a498; line-height: 1.5; }
+  .receiving-log { display: flex; flex-direction: column; gap: 10px; }
+  .delivery {
+    background: #f2ede1;
+    color: #2b2822;
+    padding: 12px 14px;
+    border-left: 4px solid #6fae7f;
+  }
+  .delivery-time { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #6b6656; margin: 0 0 6px; }
+  .delivery-item { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; }
+  .delivery-item .qty { font-weight: 600; }
+  .delivery-actions { text-align: right; margin-top: 6px; }
+  .delivery-actions button { background: none; border: none; color: #6b6656; font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+  .delivery-actions button:hover { color: #d94f30; }
+</style>
+</head>
+<body>
+<div class="station">
+  <h2 class="sr-only">La pasada: asistente personal con chat, voz, tareas y notas, con estetica de estacion de cocina.</h2>
+  <div class="head">
+    <div>
+      <p class="eyebrow">estacion de mando</p>
+      <h1>La pasada</h1>
+    </div>
+    <div class="status"><span class="dot"></span>en linea</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="chatPanel">Habla</button>
+    <button class="tab" data-panel="ticketsPanel">Tickets</button>
+    <button class="tab" data-panel="receivingPanel">Mercaderia</button>
+    <button class="tab" data-panel="notesPanel">Notas</button>
+  </div>
+
+  <div class="panel active" id="chatPanel">
+    <div class="chat-log" id="chatLog"></div>
+    <div class="chat-input-row">
+      <button class="icon" id="micBtn" aria-label="Hablar" title="Hablar"><i>&#127908;</i></button>
+      <input type="text" id="chatInput" placeholder="Pidele algo a la pasada...">
+      <button class="send" id="sendBtn">Enviar</button>
+    </div>
+    <label class="voice-toggle"><input type="checkbox" id="voiceOutToggle"> Leer respuestas en voz alta</label>
+    <p class="err" id="chatErr"></p>
+  </div>
+
+  <div class="panel" id="ticketsPanel">
+    <div class="add-ticket">
+      <input type="text" id="ticketInput" placeholder="Nuevo pendiente...">
+      <label class="ticket-tag"><input type="checkbox" id="ticketUrgent"> urgente</label>
+      <button class="send" id="addTicketBtn">Mandar</button>
+    </div>
+    <p class="err" id="ticketErr"></p>
+    <div class="tickets" id="ticketsArea"></div>
+  </div>
+
+  <div class="panel" id="receivingPanel">
+    <div class="receiving-mic">
+      <button class="icon" id="receivingMicBtn" aria-label="Anotar mercaderia por voz" title="Anotar mercaderia por voz"><i>&#127908;</i></button>
+      <p class="receiving-hint">Apreta y decime lo que llego, por ejemplo: "llegaron 5 kilos de tomate y 2 cajas de limon". Lo anoto solo.</p>
+    </div>
+    <p class="err" id="receivingErr"></p>
+    <p class="empty" id="receivingStatus" style="display:none;"></p>
+    <div class="receiving-log" id="receivingArea"></div>
+  </div>
+
+  <div class="panel" id="notesPanel">
+    <div class="notes-add">
+      <input type="text" id="noteInput" placeholder="Nota rapida...">
+      <button class="send" id="addNoteBtn">Guardar</button>
+    </div>
+    <p class="err" id="noteErr"></p>
+    <div class="notes-list" id="notesArea"></div>
+  </div>
+</div>
+
+<script>
+let chatHistory = [];
+let tickets = [];
+let notes = [];
+let deliveries = [];
+let recognizing = false;
+let recognition = null;
+let receivingRecognizing = false;
+let receivingRecognition = null;
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+
+async function loadAll() {
+  try {
+    const t = await window.storage.get('tickets', false);
+    tickets = t ? JSON.parse(t.value) : [];
+  } catch (e) { tickets = []; }
+  try {
+    const n = await window.storage.get('notes', false);
+    notes = n ? JSON.parse(n.value) : [];
+  } catch (e) { notes = []; }
+  try {
+    const d = await window.storage.get('deliveries', false);
+    deliveries = d ? JSON.parse(d.value) : [];
+  } catch (e) { deliveries = []; }
+  renderTickets();
+  renderNotes();
+  renderDeliveries();
+}
+
+async function saveTickets() { try { await window.storage.set('tickets', JSON.stringify(tickets), false); } catch (e) {} }
+async function saveNotes() { try { await window.storage.set('notes', JSON.stringify(notes), false); } catch (e) {} }
+async function saveDeliveries() { try { await window.storage.set('deliveries', JSON.stringify(deliveries), false); } catch (e) {} }
+
+function renderDeliveries() {
+  const area = document.getElementById('receivingArea');
+  if (deliveries.length === 0) { area.innerHTML = '<p class="empty">Todavia no se anoto ninguna entrega.</p>'; return; }
+  area.innerHTML = deliveries.map((d, i) => `
+    <div class="delivery">
+      <p class="delivery-time"></p>
+      <div class="items"></div>
+      <div class="delivery-actions"><button data-i="${i}">Borrar</button></div>
+    </div>
+  `).join('');
+  const cards = area.querySelectorAll('.delivery');
+  cards.forEach((card, i) => {
+    card.querySelector('.delivery-time').textContent = deliveries[i].time;
+    const itemsDiv = card.querySelector('.items');
+    deliveries[i].items.forEach(it => {
+      const row = document.createElement('div');
+      row.className = 'delivery-item';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = it.name;
+      const qtySpan = document.createElement('span');
+      qtySpan.className = 'qty';
+      qtySpan.textContent = it.quantity + ' ' + it.unit;
+      row.appendChild(nameSpan);
+      row.appendChild(qtySpan);
+      itemsDiv.appendChild(row);
+    });
+  });
+  area.querySelectorAll('.delivery-actions button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deliveries.splice(Number(btn.dataset.i), 1);
+      saveDeliveries();
+      renderDeliveries();
+    });
+  });
+}
+
+async function parseDelivery(spokenText) {
+  const prompt = `Un cocinero acaba de recibir mercaderia y dijo esto en voz alta: "${spokenText}"\nExtrae cada producto mencionado con su cantidad y unidad (kg, g, l, ml, unidades, cajas, bolsas, atados, etc segun corresponda). Si no menciona unidad clara, usa "unidades".\nResponde SOLO con un JSON, sin texto adicional, sin backticks, con esta forma exacta:\n{"items": [{"name": "...", "quantity": "...", "unit": "..."}]}`;
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 500,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!response.ok) throw new Error('request_failed');
+  const data = await response.json();
+  const text = data.content.map(b => b.text || '').join('').trim();
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+async function handleReceivingTranscript(spokenText) {
+  const status = document.getElementById('receivingStatus');
+  const err = document.getElementById('receivingErr');
+  err.style.display = 'none';
+  status.style.display = 'block';
+  status.textContent = 'Escuche: "' + spokenText + '". Anotando...';
+  try {
+    const parsed = await parseDelivery(spokenText);
+    if (!parsed.items || parsed.items.length === 0) throw new Error('no_items');
+    deliveries.unshift({
+      time: new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+      items: parsed.items
+    });
+    saveDeliveries();
+    renderDeliveries();
+    status.style.display = 'none';
+  } catch (e) {
+    status.style.display = 'none';
+    err.textContent = 'No pude entender bien la entrega. Intenta de nuevo, mas claro.';
+    err.style.display = 'block';
+  }
+}
+
+function renderTickets() {
+  const area = document.getElementById('ticketsArea');
+  if (tickets.length === 0) { area.innerHTML = '<p class="empty">No hay pendientes en la pasada.</p>'; return; }
+  area.innerHTML = tickets.map((t, i) => `
+    <div class="ticket ${t.urgent ? 'urgent' : ''}">
+      <div>
+        ${t.urgent ? '<span class="ticket-tag-label">urgente</span>' : ''}
+        <span class="ticket-title"></span>
+      </div>
+      <div class="ticket-actions">
+        <button data-i="${i}" class="fire">Listo</button>
+      </div>
+    </div>
+  `).join('');
+  area.querySelectorAll('.ticket-title').forEach((el, i) => { el.textContent = tickets[i].title; });
+  area.querySelectorAll('.fire').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tickets.splice(Number(btn.dataset.i), 1);
+      saveTickets();
+      renderTickets();
+    });
+  });
+}
+
+function renderNotes() {
+  const area = document.getElementById('notesArea');
+  if (notes.length === 0) { area.innerHTML = '<p class="empty">No hay notas guardadas.</p>'; return; }
+  area.innerHTML = notes.map((n, i) => `
+    <div class="note"><span class="note-text"></span><button data-i="${i}">Borrar</button></div>
+  `).join('');
+  area.querySelectorAll('.note-text').forEach((el, i) => { el.textContent = notes[i]; });
+  area.querySelectorAll('.note button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      notes.splice(Number(btn.dataset.i), 1);
+      saveNotes();
+      renderNotes();
+    });
+  });
+}
+
+document.getElementById('addTicketBtn').addEventListener('click', () => {
+  const val = document.getElementById('ticketInput').value.trim();
+  const err = document.getElementById('ticketErr');
+  if (!val) { err.textContent = 'Escribe el pendiente primero.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  tickets.unshift({ title: val, urgent: document.getElementById('ticketUrgent').checked });
+  document.getElementById('ticketInput').value = '';
+  document.getElementById('ticketUrgent').checked = false;
+  saveTickets();
+  renderTickets();
+});
+
+document.getElementById('addNoteBtn').addEventListener('click', () => {
+  const val = document.getElementById('noteInput').value.trim();
+  const err = document.getElementById('noteErr');
+  if (!val) { err.textContent = 'Escribe la nota primero.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  notes.unshift(val);
+  document.getElementById('noteInput').value = '';
+  saveNotes();
+  renderNotes();
+});
+
+function addChatMsg(role, text) {
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function askJarvis(userText) {
+  const context = tickets.length ? ('Pendientes actuales del usuario: ' + tickets.map(t => t.title).join(', ') + '.') : '';
+  const prompt = `Eres "la pasada", un asistente personal hablado, para un cocinero. Responde en espanol, breve y directo (maximo 3-4 frases), tono cercano y resolutivo, como un buen segundo de cocina. ${context}\nMensaje del usuario: ${userText}`;
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!response.ok) throw new Error('request_failed');
+  const data = await response.json();
+  return data.content.map(b => b.text || '').join('').trim();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const err = document.getElementById('chatErr');
+  const text = input.value.trim();
+  if (!text) { err.textContent = 'Dile algo a la pasada primero.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  addChatMsg('user', text);
+  input.value = '';
+  addChatMsg('jarvis', '...');
+  const log = document.getElementById('chatLog');
+  try {
+    const reply = await askJarvis(text);
+    log.lastChild.textContent = reply;
+    if (document.getElementById('voiceOutToggle').checked && 'speechSynthesis' in window) {
+      const utter = new SpeechSynthesisUtterance(reply);
+      utter.lang = 'es-ES';
+      window.speechSynthesis.speak(utter);
+    }
+  } catch (e) {
+    log.lastChild.textContent = 'No pude responder. Intenta de nuevo.';
+  }
+}
+
+document.getElementById('sendBtn').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = document.getElementById('micBtn');
+if (SpeechRecognitionClass) {
+  recognition = new SpeechRecognitionClass();
+  recognition.lang = 'es-ES';
+  recognition.interimResults = false;
+  recognition.onresult = (e) => {
+    document.getElementById('chatInput').value = e.results[0][0].transcript;
+  };
+  recognition.onend = () => { recognizing = false; micBtn.classList.remove('listening'); };
+  micBtn.addEventListener('click', () => {
+    if (recognizing) { recognition.stop(); return; }
+    try {
+      recognition.start();
+      recognizing = true;
+      micBtn.classList.add('listening');
+    } catch (e) {}
+  });
+} else {
+  micBtn.addEventListener('click', () => {
+    document.getElementById('chatErr').textContent = 'El reconocimiento de voz no esta disponible en este navegador.';
+    document.getElementById('chatErr').style.display = 'block';
+  });
+}
+
+const receivingMicBtn = document.getElementById('receivingMicBtn');
+if (SpeechRecognitionClass) {
+  receivingRecognition = new SpeechRecognitionClass();
+  receivingRecognition.lang = 'es-ES';
+  receivingRecognition.interimResults = false;
+  receivingRecognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    handleReceivingTranscript(transcript);
+  };
+  receivingRecognition.onend = () => { receivingRecognizing = false; receivingMicBtn.classList.remove('listening'); };
+  receivingMicBtn.addEventListener('click', () => {
+    if (receivingRecognizing) { receivingRecognition.stop(); return; }
+    try {
+      receivingRecognition.start();
+      receivingRecognizing = true;
+      receivingMicBtn.classList.add('listening');
+    } catch (e) {}
+  });
+} else {
+  receivingMicBtn.addEventListener('click', () => {
+    document.getElementById('receivingErr').textContent = 'El reconocimiento de voz no esta disponible en este navegador.';
+    document.getElementById('receivingErr').style.display = 'block';
+  });
+}
+
+addChatMsg('jarvis', 'Aqui la pasada. Decime que necesitas.');
+loadAll();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').catch(() => {});
+}
+</script>
+</body>
+</html>

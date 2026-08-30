@@ -1,0 +1,14 @@
+{
+  "name": "La Pasada",
+  "short_name": "La Pasada",
+  "description": "Asistente personal de cocina: chat con voz, tickets, notas y registro de mercaderia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1d1d1b",
+  "theme_color": "#1d1d1b",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
